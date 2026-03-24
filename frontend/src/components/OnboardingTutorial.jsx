@@ -311,7 +311,6 @@ export default function OnboardingTutorial({ active, onComplete, onEvent }) {
         // so it doesn't extend above the AppBar or below the screen
         const appBar = document.querySelector('.MuiAppBar-root');
         const appBarBottom = appBar?.getBoundingClientRect()?.bottom || 0;
-        const vh = window.innerHeight;
         let top = rect.top - pad;
         let height = rect.height + pad * 2;
         // Only clamp if the element extends above the AppBar (i.e. it's a content area, not a tab/bar)
