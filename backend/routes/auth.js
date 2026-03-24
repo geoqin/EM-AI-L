@@ -253,7 +253,12 @@ router.get('/status', async (req, res) => {
 router.post('/logout', async (req, res) => {
     await query('DELETE FROM tokens WHERE id = 1');
     await deleteOutlookTokens();
-    res.clearCookie('user_email');
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.clearCookie('user_email', {
+        signed: true, httpOnly: true,
+        sameSite: isProduction ? 'none' : 'lax',
+        secure: isProduction,
+    });
     console.log('🔌 Full logout — all tokens cleared');
     res.json({ success: true });
 });

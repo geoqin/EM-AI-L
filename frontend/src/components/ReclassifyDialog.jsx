@@ -66,7 +66,7 @@ export default function TeachAIDialog({ open, email, onClose, onComplete }) {
             const newRule = proposedRules.find(r => !r.id) || proposedRules[0];
             const ruleCategory = newRule?.category || currentCategory;
 
-            const res = await fetch(`http://localhost:3001/api/threads/emails/${email.id}/triage`, {
+            const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/threads/emails/${email.id}/triage`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ category: ruleCategory, rules: proposedRules }),

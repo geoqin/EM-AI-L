@@ -77,7 +77,7 @@ export default function Dashboard() {
 
     async function handleLogout() {
         try {
-            await fetch('http://localhost:3001/auth/logout', { method: 'POST', credentials: 'include' });
+            await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/auth/logout`, { method: 'POST', credentials: 'include' });
         } catch { /* ignore */ }
         setAuthenticated(false);
         setGoogleAuthenticated(false);
