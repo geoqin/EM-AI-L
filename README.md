@@ -61,13 +61,18 @@ createdb email_ai
    - Authorized redirect URI: `http://localhost:3001/auth/google/callback`
    - Copy the **Client ID** and **Client Secret**
 
-#### Gemini API key (required for AI features)
+#### AI Provider (choose one)
 
-1. Go to [Google AI Studio](https://aistudio.google.com/apikey)
-2. Click **Create API Key**
-3. Copy the key
+The app supports multiple AI backends. Set `AI_PROVIDER` in your `.env` to one of:
 
-> Google provides a generous free tier for Gemini API. For personal use, you'll likely stay within free limits.
+| Provider | `AI_PROVIDER` | API Key Env Var | Free Tier? |
+|----------|---------------|-----------------|------------|
+| **Gemini** (default) | `gemini` | `GEMINI_API_KEY` | Yes — [get key](https://aistudio.google.com/apikey) |
+| **Claude** (Anthropic) | `claude` | `ANTHROPIC_API_KEY` | No — [get key](https://console.anthropic.com) |
+| **OpenAI** (GPT-4o) | `openai` | `OPENAI_API_KEY` | No — [get key](https://platform.openai.com/api-keys) |
+| **Ollama** (local) | `ollama` | None (runs locally) | Yes — [install](https://ollama.com) then `ollama pull llama3.1` |
+
+> Gemini is recommended for most users — Google provides a generous free tier.
 
 #### Outlook OAuth (optional)
 
@@ -89,10 +94,12 @@ cp .env.example .env
 Edit `.env` with your keys:
 
 ```env
+AI_PROVIDER=gemini
+GEMINI_API_KEY=your_gemini_key
+
 GOOGLE_CLIENT_ID=your_client_id
 GOOGLE_CLIENT_SECRET=your_client_secret
 REDIRECT_URI=http://localhost:3001/auth/google/callback
-GEMINI_API_KEY=your_gemini_key
 SESSION_SECRET=run_node_-e_"console.log(require('crypto').randomBytes(32).toString('hex'))"
 DATABASE_URL=postgresql://localhost:5432/email_ai
 FRONTEND_URL=http://localhost:5173

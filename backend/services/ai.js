@@ -1,24 +1,4 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-// 3-tier model system: use the right model for the right task
-const MODELS = {
-    lite: 'gemini-2.5-flash-lite',  // Fast + cheap: classification, pattern matching, structured decisions
-    mid: 'gemini-2.5-flash',       // Balanced: understanding, summarizing, intent detection
-    pro: 'gemini-2.5-pro',         // Best quality: drafting emails, generating summaries
-};
-
-function getModel(tier = 'mid') {
-    const modelName = MODELS[tier] || MODELS.mid;
-    return genAI.getGenerativeModel({
-        model: modelName,
-        generationConfig: {
-            temperature: 0.3,
-            responseMimeType: 'application/json',
-        },
-    });
-}
+const { generate } = require('./providers');
 
 /**
  * Stage 1: Batch triage — classify emails as important/filtered/needs_review in one call.
@@ -27,8 +7,6 @@ function getModel(tier = 'mid') {
  */
 async function triageEmails(emails, rules = [], accountType = 'personal') {
     if (emails.length === 0) return [];
-
-    const model = getModel('lite');  // Simple classification task
 
     const emailList = emails.map((e, i) => ({
         index: i,
@@ -73,11 +51,10 @@ ${JSON.stringify(emailList, null, 2)}
 
 Return a JSON array of objects with "id", "category", "confidence", and "reason" fields.`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = await generate(prompt, 'lite');
 
     try {
-        const parsed = JSON.parse(text);
+        const parsed = JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
         return Array.isArray(parsed) ? parsed : [];
     } catch (err) {
         console.error('❌ Failed to parse triage response:', text);
@@ -89,8 +66,6 @@ Return a JSON array of objects with "id", "category", "confidence", and "reason"
  * Stage 2a: Decide which semantic thread an email belongs to.
  */
 async function assignEmailToThread(email, existingThreads, suppressedThreads = []) {
-    const model = getModel('lite');  // Matching against a list — structured decision
-
     const threadSummaries = existingThreads.map(t => ({
         id: t.id,
         title: t.title,
@@ -134,11 +109,10 @@ Rules:
 - If no existing thread is a strong match (all < 70), set best_new_thread confidence high.
 - NEVER suggest creating a new thread that closely resembles a suppressed thread. If the email would naturally belong to a suppressed thread topic, leave it unthreaded by returning empty top_matches and a best_new_thread with confidence 0.`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = await generate(prompt, 'lite');
 
     try {
-        return JSON.parse(text);
+        return JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
     } catch (err) {
         console.error('❌ Failed to parse thread assignment:', text);
         return { top_matches: [], best_new_thread: { title: email.subject, category: 'other', confidence: 100 } };
@@ -151,8 +125,6 @@ Rules:
  */
 async function scoreEmailsForThread(thread, candidateEmails) {
     if (candidateEmails.length === 0) return [];
-
-    const model = getModel('lite');
 
     const threadContext = {
         title: thread.title,
@@ -182,11 +154,10 @@ Return a JSON array of objects:
 
 Only include emails with confidence >= 20. Sort by confidence descending. Maximum 10 results.`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = await generate(prompt, 'lite');
 
     try {
-        const parsed = JSON.parse(text);
+        const parsed = JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
         return Array.isArray(parsed) ? parsed : [];
     } catch (err) {
         console.error('❌ Failed to parse email scoring:', text);
@@ -198,8 +169,6 @@ Only include emails with confidence >= 20. Sort by confidence descending. Maximu
  * Stage 2b: Extract/update thread memory bank from a new email.
  */
 async function extractThreadMemory(currentMemory, newEmail) {
-    const model = getModel('mid');  // Needs nuanced understanding
-
     const prompt = `Given an email thread's current memory and a new email, extract and update key information.
 
 CURRENT MEMORY:
@@ -222,11 +191,10 @@ Return an updated JSON memory bank with these fields:
 
 Merge new information with existing. Remove outdated items. Keep it concise.`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = await generate(prompt, 'mid');
 
     try {
-        return JSON.parse(text);
+        return JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
     } catch (err) {
         console.error('❌ Failed to parse memory extraction:', text);
         return currentMemory || {};
@@ -237,8 +205,6 @@ Merge new information with existing. Remove outdated items. Keep it concise.`;
  * Stage 2c: Generate a summary for a thread.
  */
 async function generateSummary(thread, emails) {
-    const model = getModel('pro');  // User-facing summary — needs best writing quality
-
     const emailTexts = emails.map(e =>
         `From: ${e.from_email}\nDate: ${e.received_at}\nSubject: ${e.subject}\n${(e.snippet || '').slice(0, 300)}`
     ).join('\n---\n');
@@ -259,11 +225,10 @@ Return JSON:
   "status": "one sentence current status"
 }`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = await generate(prompt, 'pro');
 
     try {
-        return JSON.parse(text);
+        return JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
     } catch (err) {
         console.error('❌ Failed to parse summary:', text);
         return { tldr: 'Summary generation failed', action_items: [], key_people: [], status: 'Unknown' };
@@ -272,12 +237,8 @@ Return JSON:
 
 /**
  * Generate a triage rule from user reasoning.
- * The user explains why an email should be classified a certain way,
- * and the AI creates a smart, reusable rule.
  */
 async function generateTriageRule(email, desiredCategory, userReasoning, existingRules = []) {
-    const model = getModel('lite');  // Structured rule generation from patterns
-
     const existingRulesText = existingRules.length > 0
         ? `\nEXISTING RULES (consider how the new rule interacts with these):
 ${existingRules.map(r => `ID: ${r.id} | "${r.sender_pattern}" → ${r.category} (${r.reason})`).join('\n')}`
@@ -311,8 +272,7 @@ Return a JSON array of rule objects (at least one for the new rule, plus any exi
   }
 ]`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = await generate(prompt, 'lite');
 
     try {
         const parsed = JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
@@ -334,8 +294,6 @@ Return a JSON array of rule objects (at least one for the new rule, plus any exi
  */
 async function generateBriefing(emails, tone = 'concise') {
     if (emails.length === 0) return { message: "No new emails to brief you on. You're all caught up! 🎉", emails: [] };
-
-    const model = getModel('mid');  // Summarizing emails — balanced quality/speed
 
     const emailList = emails.map(e => ({
         id: e.id,
@@ -375,11 +333,10 @@ Return JSON:
   ]
 }`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = await generate(prompt, 'mid');
 
     try {
-        return JSON.parse(text);
+        return JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
     } catch (err) {
         console.error('❌ Failed to parse briefing:', text);
         return { greeting: `You have ${emails.length} new email(s).`, emails: [] };
@@ -390,8 +347,6 @@ Return JSON:
  * Generate a reply draft for an email based on user instructions.
  */
 async function generateReplyDraft(email, userInstructions, tone = 'concise') {
-    const model = getModel('pro');  // Drafting real emails — needs best quality
-
     const prompt = `Draft a reply to this email based on the user's instructions.
 
 ORIGINAL EMAIL:
@@ -411,11 +366,10 @@ Return JSON:
   "notes": "optional brief note about the draft (e.g. 'kept it brief since they seem busy')"
 }`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = await generate(prompt, 'pro');
 
     try {
-        return JSON.parse(text);
+        return JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
     } catch (err) {
         console.error('❌ Failed to parse draft:', text);
         return { subject: `Re: ${email.subject}`, body: userInstructions, notes: 'Auto-generated fallback' };
@@ -427,8 +381,6 @@ Return JSON:
  * Determines intent and returns an appropriate response.
  */
 async function chatRespond(conversationHistory, userMessage, currentEmailContext, briefedEmails = [], tone = 'concise') {
-    const model = getModel('mid');  // Intent detection — balanced
-
     const prompt = `You are the AI assistant built into the "EMail-AI-Laundry" app. You have memory of the full conversation. Process the user's message in context of the conversation history.
 
 ABOUT THIS APP:
@@ -475,8 +427,7 @@ Return JSON:
   "suggested_rule": { "sender_pattern": "...", "subject_pattern": "...", "category": "junk", "reason": "..." } (include if intent is suggest_rule OR confirm_rule)
 }`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = await generate(prompt, 'mid');
 
     try {
         const parsed = JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
