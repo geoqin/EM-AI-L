@@ -36,7 +36,7 @@ function saveChatHistory(messages) {
  */
 export default function SmartBar({ searchQuery, onSearchChange, onTutorialEvent }) {
     const [chatMessages, setChatMessages] = useState(loadChatHistory);
-    const [chatOpen, setChatOpen] = useState(() => loadChatHistory().length > 0);
+    const [chatOpen, setChatOpen] = useState(false);
     const [aiLoading, setAiLoading] = useState(false);
     const [aiInput, setAiInput] = useState('');
     const [mode, setMode] = useState('search'); // 'search' or 'chat'

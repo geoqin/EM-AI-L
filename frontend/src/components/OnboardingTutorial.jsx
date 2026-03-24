@@ -307,12 +307,14 @@ export default function OnboardingTutorial({ active, onComplete, onEvent }) {
         const pad = 8;
         const minRadius = 8; // never show sharp corners
         const elRadius = getComputedBorderRadius(el);
-        const clampTop = Math.max(0, rect.top - pad);
+        const rawTop = rect.top - pad;
+        const clampTop = Math.max(0, rawTop);
+        const topClipped = clampTop - rawTop; // how much was clipped off the top
         const sr = {
             top: clampTop,
             left: Math.max(0, rect.left - pad),
             width: rect.width + pad * 2,
-            height: rect.height + pad + (rect.top - clampTop + pad),
+            height: rect.height + pad * 2 - topClipped,
             borderRadius: Math.max(minRadius, elRadius > 0 ? elRadius + pad : minRadius),
         };
         setSpotlightRect(sr);
