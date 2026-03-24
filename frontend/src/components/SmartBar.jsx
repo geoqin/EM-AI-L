@@ -213,6 +213,7 @@ export default function SmartBar({ searchQuery, onSearchChange, onTutorialEvent 
                     placeholder={mode === 'chat' ? "Reply to AI..." : "Search or ask AI anything... (Enter to ask AI)"}
                     value={mode === 'chat' ? aiInput : searchQuery}
                     onChange={(e) => mode === 'chat' ? setAiInput(e.target.value) : onSearchChange(e.target.value)}
+                    onFocus={() => { if (chatMessages.length > 0 && !chatOpen) { setChatOpen(true); setMode('chat'); } }}
                     onKeyDown={handleKeyDown}
                     sx={{
                         '& .MuiOutlinedInput-root': {

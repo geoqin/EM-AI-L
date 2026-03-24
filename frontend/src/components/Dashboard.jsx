@@ -201,7 +201,7 @@ export default function Dashboard() {
                 <Container maxWidth="md" disableGutters>
                     {showSmartBar && (
                         <Box sx={{ px: 2, pb: 1 }}>
-                            <SmartBar key={tab} searchQuery={searchQuery} onSearchChange={setSearchQuery} onTutorialEvent={fireTutorialEvent} />
+                            <SmartBar searchQuery={searchQuery} onSearchChange={setSearchQuery} onTutorialEvent={fireTutorialEvent} />
                         </Box>
                     )}
 
