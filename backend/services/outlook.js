@@ -118,13 +118,11 @@ async function getUserEmail(accessToken) {
 }
 
 /**
- * Fetch emails from Outlook — Focused inbox only (no junk/clutter/other)
+ * Fetch emails from Outlook inbox, newest first
  */
 async function fetchEmails(accessToken, maxResults = 20) {
-    // Graph API doesn't support combining $filter on inferenceClassification with $orderby.
-    // Omitting $orderby — default return order is newest first.
     const inboxData = await graphFetch(accessToken,
-        `/me/mailFolders/inbox/messages?$top=${maxResults}&$filter=inferenceClassification eq 'focused'&$select=id,subject,from,toRecipients,body,bodyPreview,receivedDateTime,conversationId`
+        `/me/mailFolders/inbox/messages?$top=${maxResults}&$orderby=receivedDateTime desc&$select=id,subject,from,toRecipients,body,bodyPreview,receivedDateTime,conversationId`
     );
     const inboxMessages = inboxData?.value || [];
 
