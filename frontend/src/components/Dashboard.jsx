@@ -93,7 +93,7 @@ export default function Dashboard() {
         setSelectedThread(null);
         setSearchQuery('');
         // Fire tutorial events for tab navigation
-        const tabEvents = { 1: 'tab-trash', 2: 'tab-rules', 3: 'tab-threads' };
+        const tabEvents = { 1: 'tab-threads', 2: 'tab-trash', 3: 'tab-rules' };
         if (tabEvents[v]) fireTutorialEvent(tabEvents[v]);
     }
 
@@ -126,11 +126,11 @@ export default function Dashboard() {
             case 0:
                 return <EmailList searchQuery={searchQuery} onTutorialEvent={fireTutorialEvent} />;
             case 1:
-                return <JunkList searchQuery={searchQuery} />;
-            case 2:
-                return <RulesPage />;
-            case 3:
                 return <ThreadList onSelectThread={setSelectedThread} searchQuery={searchQuery} />;
+            case 2:
+                return <JunkList searchQuery={searchQuery} />;
+            case 3:
+                return <RulesPage />;
             case 4:
                 return <SettingsPage userEmail={userEmail} userName={userName} onUserNameChange={setUserName}
                     googleAuthenticated={googleAuthenticated}
@@ -217,9 +217,9 @@ export default function Dashboard() {
                             scrollButtons="auto"
                         >
                             <Tab icon={<InboxIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Inbox" />
+                            <Tab data-tour="threads-tab" icon={<AutoAwesomeIcon sx={{ fontSize: 18 }} />} iconPosition="start" label={<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>Threads<Chip label="Beta" size="small" sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, bgcolor: '#ef4444', color: '#fff' }} /></Box>} />
                             <Tab data-tour="trash-tab" icon={<DeleteIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Trash" />
                             <Tab data-tour="rules-tab" icon={<SchoolIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Rules" />
-                            <Tab data-tour="threads-tab" icon={<AutoAwesomeIcon sx={{ fontSize: 18 }} />} iconPosition="start" label={<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>Threads<Chip label="Beta" size="small" sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, bgcolor: '#ef4444', color: '#fff' }} /></Box>} />
                         </Tabs>
                     )}
                 </Container>

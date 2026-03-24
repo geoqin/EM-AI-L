@@ -100,11 +100,29 @@ const STEPS = [
         passthrough: true,
     },
 
+    // ── Threads ──
+    {
+        id: 'go-threads',
+        target: '[data-tour="threads-tab"]',
+        text: 'Now click Threads to see how the AI groups your emails by topic — not just by reply chain. This feature is in beta.',
+        position: 'bottom',
+        waitFor: 'tab-threads',
+        passthrough: true,
+    },
+    {
+        id: 'threads-view',
+        target: '[data-tour="thread-list"]',
+        text: 'Each thread is an AI-grouped conversation. Click one to see its emails, summary, and memory. You can delete threads you don\'t want — the AI won\'t recreate them.',
+        position: 'bottom',
+        waitFor: 'dismiss',
+        cta: 'Got it',
+    },
+
     // ── Trash: navigate ──
     {
         id: 'go-trash',
         target: '[data-tour="trash-tab"]',
-        text: 'Now check out Trash. Click it to see what the AI flagged as junk.',
+        text: 'Next, check out Trash. Click it to see what the AI flagged as junk.',
         position: 'bottom',
         waitFor: 'tab-trash',
         passthrough: true,
@@ -186,24 +204,6 @@ const STEPS = [
         id: 'rules-active',
         target: '[data-tour="rules-active"]',
         text: "Active rules run every time you analyze emails. You can edit, apply individually, or delete any rule. The more you teach the AI, the smarter it gets.",
-        position: 'bottom',
-        waitFor: 'dismiss',
-        cta: 'Got it',
-    },
-
-    // ── Threads ──
-    {
-        id: 'go-threads',
-        target: '[data-tour="threads-tab"]',
-        text: 'Finally, click Threads to see how the AI groups your emails by topic — not just by reply chain. This feature is in beta.',
-        position: 'bottom',
-        waitFor: 'tab-threads',
-        passthrough: true,
-    },
-    {
-        id: 'threads-view',
-        target: '[data-tour="thread-list"]',
-        text: 'Each thread is an AI-grouped conversation. Click one to see its emails, summary, and memory. You can delete threads you don\'t want — the AI won\'t recreate them.',
         position: 'bottom',
         waitFor: 'dismiss',
         cta: 'Got it',
