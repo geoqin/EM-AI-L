@@ -307,11 +307,28 @@ export default function OnboardingTutorial({ active, onComplete, onEvent }) {
         const pad = 8;
         const minRadius = 8; // never show sharp corners
         const elRadius = getComputedBorderRadius(el);
+        // For large content elements, clip the spotlight to the visible viewport
+        // so it doesn't extend above the AppBar or below the screen
+        const appBar = document.querySelector('.MuiAppBar-root');
+        const appBarBottom = appBar?.getBoundingClientRect()?.bottom || 0;
+        const vh = window.innerHeight;
+        let top = rect.top - pad;
+        let height = rect.height + pad * 2;
+        // Only clamp if the element extends above the AppBar (i.e. it's a content area, not a tab/bar)
+        if (top < appBarBottom && !appBar?.contains(el)) {
+            const clipped = appBarBottom - top;
+            top = appBarBottom;
+            height = height - clipped;
+        }
+        // Also clamp bottom to viewport
+        if (top + height > vh) {
+            height = vh - top;
+        }
         const sr = {
-            top: rect.top - pad,
+            top,
             left: rect.left - pad,
             width: rect.width + pad * 2,
-            height: rect.height + pad * 2,
+            height: Math.max(0, height),
             borderRadius: Math.max(minRadius, elRadius > 0 ? elRadius + pad : minRadius),
         };
         setSpotlightRect(sr);
