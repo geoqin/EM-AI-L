@@ -307,14 +307,16 @@ export default function OnboardingTutorial({ active, onComplete, onEvent }) {
         const pad = 8;
         const minRadius = 8; // never show sharp corners
         const elRadius = getComputedBorderRadius(el);
+        // Clamp spotlight to stay below the sticky AppBar (~100px covers AppBar + tabs)
+        const appBarBottom = document.querySelector('.MuiAppBar-root')?.getBoundingClientRect()?.bottom || 0;
         const rawTop = rect.top - pad;
-        const clampTop = Math.max(0, rawTop);
-        const topClipped = clampTop - rawTop; // how much was clipped off the top
+        const clampTop = Math.max(appBarBottom, rawTop);
+        const topClipped = clampTop - rawTop;
         const sr = {
             top: clampTop,
             left: Math.max(0, rect.left - pad),
             width: rect.width + pad * 2,
-            height: rect.height + pad * 2 - topClipped,
+            height: Math.max(0, rect.height + pad * 2 - topClipped),
             borderRadius: Math.max(minRadius, elRadius > 0 ? elRadius + pad : minRadius),
         };
         setSpotlightRect(sr);
