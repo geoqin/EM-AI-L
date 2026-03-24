@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:3001';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // Wrapper that adds credentials to all requests
 async function apiFetch(url, options = {}) {

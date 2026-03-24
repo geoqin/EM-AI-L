@@ -40,9 +40,12 @@ router.get('/google/callback', async (req, res) => {
             const email = profile.data.emailAddress;
             if (email) {
                 await getOrCreateUser(email);
+                const isProduction = process.env.NODE_ENV === 'production';
                 res.cookie('user_email', email, {
                     signed: true, httpOnly: true,
-                    maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: 'lax',
+                    maxAge: 30 * 24 * 60 * 60 * 1000,
+                    sameSite: isProduction ? 'none' : 'lax',
+                    secure: isProduction,
                 });
             }
         } catch (e) { console.log('⚠️ Could not set user cookie:', e.message); }
@@ -104,9 +107,12 @@ router.get('/outlook/callback', async (req, res) => {
         // Register/identify user
         if (email) {
             await getOrCreateUser(email);
+            const isProduction = process.env.NODE_ENV === 'production';
             res.cookie('user_email', email, {
                 signed: true, httpOnly: true,
-                maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: 'lax',
+                maxAge: 30 * 24 * 60 * 60 * 1000,
+                sameSite: isProduction ? 'none' : 'lax',
+                secure: isProduction,
             });
         }
 
@@ -212,9 +218,12 @@ router.get('/status', async (req, res) => {
     // Ensure user cookie is set (handles existing users who logged in before cookie system)
     if (isAuthenticated && primaryEmail && !req.signedCookies?.user_email) {
         await getOrCreateUser(primaryEmail);
+        const isProduction = process.env.NODE_ENV === 'production';
         res.cookie('user_email', primaryEmail, {
             signed: true, httpOnly: true,
-            maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: 'lax',
+            maxAge: 30 * 24 * 60 * 60 * 1000,
+            sameSite: isProduction ? 'none' : 'lax',
+            secure: isProduction,
         });
     }
 
